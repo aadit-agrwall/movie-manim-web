@@ -1,0 +1,20 @@
+3D asset credits
+
+Destiny Class Generation Ship - USS Eldridge II, by Vaportrash
+https://sketchfab.com/3d-models/destiny-class-generation-ship-uss-eldridge-ii-909dfe6b06e842d79e7f2b085738822f
+CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+Adapted for this experience through mesh simplification, relighting, and a rendered fallback.
+
+What do a seashell and a galaxy share in common?, by Salvatore Orlando
+https://sketchfab.com/3d-models/what-do-a-seashell-and-a-galaxy-share-in-common-d37e1b14da8a46709ed46a2e208eeed9
+CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+Adapted from the model's emissive galaxy and registered golden-ratio diagram planes, compressed and animated for the web.
+
+Experiment Perspective Loop FBX GLB web, by IZ.MdVerz
+https://sketchfab.com/3d-models/experiment-perspective-loop-fbx-glb-web-81b84dffaf6d41ba9da5dc4105c9a543
+CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+Stair mesh extracted from the supplied GLB, relit in brass and filmed with a scroll-driven camera.
+
+Oswald Light — Copyright 2016 The Oswald Project Authors.
+https://github.com/googlefonts/OswaldFont
+SIL Open Font License, Version 1.1 — https://openfontlicense.org/open-font-license-official-text/
