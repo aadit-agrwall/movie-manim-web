@@ -4,9 +4,31 @@ function smooth(a, b, value) {
   const t = clamp((value - a) / (b - a));
   return t * t * (3 - 2 * t);
 }
-export const titleCut=.85;
+export const galaxyCut=.85;
 function galaxyDistance(p){
-  return 69-54*Math.pow(clamp((p-.30)/(titleCut-.30)),2);
+  return 69-54*Math.pow(clamp((p-.30)/(galaxyCut-.30)),2);
+}
+
+// Two camera-space arcs share a tangent and speed at the closest pass.
+// The bow follows the trajectory. Perspective alone sets the apparent size.
+function cloudFlight(progress,aspect){
+  const portrait=aspect<1.05;
+  const depth=100;
+  const target=[((portrait?.51:.69)-.5)*aspect*depth/1.125,
+    (.5-(portrait?.36:.49))*depth/1.125,-depth];
+  const join=.31, end=.64;
+  const incoming=[[-7,-3,-44],[-6,-3.4,-28],[-5,-1.3,-4.8],[-.8,-.9,-4.8]];
+  const exitHandle=incoming[3].map((v,i)=>v+(v-incoming[2][i])*(end-join)/join);
+  const outbound=[incoming[3],exitHandle,[target[0]*.32+4,target[1]*.26,-28],target];
+  const arriving=progress<join;
+  const [a,b,c,d]=arriving?incoming:outbound;
+  const t=clamp(arriving?progress/join:(progress-join)/(end-join)),u=1-t;
+  const position=a.map((v,i)=>u*u*u*v+3*u*u*t*b[i]+3*u*t*t*c[i]+t*t*t*d[i]);
+  const tangent=a.map((v,i)=>u*u*(b[i]-v)+2*u*t*(c[i]-b[i])+t*t*(d[i]-c[i]));
+  const length=Math.hypot(...tangent);
+  const forward=tangent.map(v=>v/length);
+  const bank=-.24*Math.sin(Math.PI*smooth(.12,.56,progress));
+  return {position,forward,bank};
 }
 
 function loadImage(file) {
@@ -17,8 +39,8 @@ function loadImage(file) {
     image.src = asset(file);
   });
 }
-function frame(canvas, progress) {
-  const opacity = progress>=titleCut ? 0 : smooth(.065,.155,progress);
+function frame(canvas, progress, cloud) {
+  const opacity = cloud>=0 ? 1-smooth(.55,.67,cloud) : smooth(.065,.155,progress);
   canvas.style.opacity = String(opacity);
   if (opacity < .001) return false;
   const dpr = Math.min(devicePixelRatio || 1, 1.6);
@@ -32,7 +54,7 @@ function frame(canvas, progress) {
 }
 const common = `
   precision highp float;
-  uniform float aspect, travel, chase, shotTime, mobile, progress;
+  uniform float aspect, travel, chase, shotTime, mobile, progress, cloud;
   mat2 rotate(float a){return mat2(cos(a),sin(a),-sin(a),cos(a));}
   vec3 galaxyPoint(vec2 point){
     vec3 pos=vec3(point.x*30.,point.y*16.,0.);
@@ -66,12 +88,20 @@ const galaxyFragment = `precision highp float;
     c=mix(c,pattern.rgb,pattern.a*reveal*.96);
     gl_FragColor=vec4(c, max(c.r,max(c.g,c.b)));
   }`;
-const shipVertex = `attribute vec4 modelVertex; varying vec3 surface; varying float material;` + common + `
+const shipVertex = `attribute vec4 modelVertex; uniform vec3 shipPosition,shipForward; uniform float shipBank; varying vec3 surface; varying float material;` + common + `
   void main(){
     vec3 pos=modelVertex.xyz/1500.;
     material=modelVertex.w;
     pos.z-=3.3;
     float shipScale=mix(.12,.085,mobile);
+    if(cloud>=0.){
+      vec3 right=normalize(cross(vec3(0.,1.,0.),shipForward));
+      vec3 up=cross(shipForward,right);
+      pos.xy=rotate(shipBank)*pos.xy;
+      pos=shipPosition+.11*(right*pos.x+up*pos.y+shipForward*pos.z);
+      pos.xy=rotate(.035+.085*chase)*pos.xy;
+      surface=pos;gl_Position=project(pos);return;
+    }
     float turn=smoothstep(.58,.705,progress);
     float launch=smoothstep(.713,.858,progress);
     pos*=shipScale;
@@ -142,19 +172,22 @@ function setup(gl, mesh, image, pattern) {
   }
   gl.clearColor(0,0,0,0);
   const attributes = [gl.getAttribLocation(galaxy, 'corner'), gl.getAttribLocation(ship, 'modelVertex')];
-  const keys = ['aspect','travel','chase','shotTime','mobile','progress'];
+  const keys = ['aspect','travel','chase','shotTime','mobile','progress','cloud'];
   const programs = [galaxy,ship].map(prog => ({
     prog, locations: keys.map(key => gl.getUniformLocation(prog, key))
   }));
-  return (p, t) => {
+  const positionUniform=gl.getUniformLocation(ship,'shipPosition');
+  const forwardUniform=gl.getUniformLocation(ship,'shipForward');
+  const bankUniform=gl.getUniformLocation(ship,'shipBank');
+  return (p, t, cloud) => {
     const w=gl.drawingBufferWidth, h=gl.drawingBufferHeight;
     const chase=smooth(.36,.96,p);
     const travel=69-galaxyDistance(p);
-    const values=[w/h, travel, chase, t, 1-smooth(.62,1.25,w/h),p];
+    const values=[w/h, travel, chase, t, 1-smooth(.62,1.25,w/h),p,cloud];
     gl.viewport(0,0,w,h);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     for(let i=0;i<2;i++){
-      if(i===1 && p<=.23)continue;
+      if((i===0 && cloud>=0)||(i===1 && p<=.23))continue;
       gl.useProgram(programs[i].prog);
       programs[i].locations.forEach((loc,j)=>gl.uniform1f(loc,values[j]));
       const a=attributes[i];gl.enableVertexAttribArray(a);
@@ -164,6 +197,12 @@ function setup(gl, mesh, image, pattern) {
         gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);
         gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
       } else {
+        if(cloud>=0){
+          const pose=cloudFlight(cloud,w/h);
+          gl.uniform3fv(positionUniform,pose.position);
+          gl.uniform3fv(forwardUniform,pose.forward);
+          gl.uniform1f(bankUniform,pose.bank);
+        }
         gl.enable(gl.DEPTH_TEST);
         gl.bindBuffer(gl.ARRAY_BUFFER,vertices);
         gl.vertexAttribPointer(a,4,gl.SHORT,false,8,0);
@@ -180,10 +219,23 @@ async function fallback(canvas, galaxyImage, pattern) {
   const replacement = canvas.cloneNode(false);
   canvas.replaceWith(replacement);
   const g = replacement.getContext('2d');
-  return (p,t) => {
-    if(!frame(replacement,p))return;
+  return (p,t,cloud=-1) => {
+    if(!frame(replacement,p,cloud))return;
     const w=replacement.width,h=replacement.height, chase=smooth(.36,.96,p);
     g.clearRect(0,0,w,h);
+    if(cloud>=0){
+      const {position,forward,bank}=cloudFlight(cloud,w/h);
+      const distance=-position[2],focal=h*1.125;
+      const width=focal*(1.35+2.1*Math.abs(forward[0]))/distance;
+      const rear=smooth(.35,.92,-forward[2]);
+      g.save();g.translate(w*.5+position[0]*focal/distance,h*.5-position[1]*focal/distance);
+      g.rotate(-Math.atan2(forward[1],Math.max(.25,forward[0]))-bank*.4);
+      for(const [sprite,alpha] of [[image,1-rear],[stern,rear]]){
+        const height=width*sprite.height/sprite.width;
+        g.globalAlpha=alpha;g.drawImage(sprite,-width/2,-height/2,width,height);
+      }
+      g.restore();return;
+    }
     g.save();g.translate(w*(.54-.02*chase),h*.43);g.rotate(-.24-.12*chase);
     const width=Math.min(w*1.4,h*1.1)*69/galaxyDistance(p);
     g.globalCompositeOperation='screen';g.globalAlpha=smooth(.218,.338,p);
@@ -218,7 +270,7 @@ export async function initFlight(canvas) {
     let draw=setup(gl,mesh,galaxyImage,pattern);
     canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();draw=null;});
     canvas.addEventListener('webglcontextrestored',()=>{gl.getExtension('OES_standard_derivatives');draw=setup(gl,mesh,galaxyImage,pattern);});
-    return (progress,time)=>{if(frame(canvas,progress))draw?.(progress,time);};
+    return (progress,time,cloud=-1)=>{if(frame(canvas,progress,cloud))draw?.(progress,time,cloud);};
   } catch(error) {
     console.warn('Using rendered flight assets.',error);
     return fallback(canvas,galaxyImage,pattern);

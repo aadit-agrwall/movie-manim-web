@@ -1,11 +1,16 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#090807"><meta name="description" content="A scroll-driven cinematic voyage from a spiral staircase to a distant galaxy."><title>Movies Manim — The Journey</title><link rel="stylesheet" href="style.css"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#090807"><meta name="description" content="A scroll-driven cinematic voyage from a spiral staircase to a distant galaxy."><title>Movies Manim — The Journey</title><link rel="stylesheet" href="style.css?v=oort-flight"></head>
 <body>
 <main id="voyage" aria-label="Movies Manim cinematic journey">
-<div id="stage" aria-hidden="true"><canvas id="space"></canvas><canvas id="flight"></canvas><img id="stair-poster" alt="" src="assets/staircase-still.webp"><canvas id="stairs"></canvas><canvas id="flight-stars"></canvas><div class="shade"></div></div>
+<div id="stage" aria-hidden="true"><canvas id="space"></canvas><canvas id="flight"></canvas><img id="stair-poster" alt="" src="assets/staircase-still.webp"><canvas id="stairs"></canvas><canvas id="flight-stars"></canvas><canvas id="oort-cloud" hidden></canvas><div class="shade"></div></div>
 <header><a class="brand" href="#opening" aria-label="Movies Manim, return to opening"><svg viewBox="0 0 50 32" aria-hidden="true"><path d="M2 29 15 4l9 18L34 4l14 25M11 29l6-12 7 14 10-20 10 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="miter"/></svg><span>MOVIES MANIM</span></a><div class="utilities"><button id="menu" aria-label="Open chapter menu" aria-expanded="false" aria-controls="chapters"><span></span><span></span></button></div></header>
-<section class="story" aria-live="polite"><div class="eyebrow"><i></i><span id="chapter">CHAPTER 01</span><b>/</b><span id="location">PERSPECTIVE LOOP</span></div><h1 id="headline">The Spiral<br><em>Staircase.</em></h1><p id="description">Follow the steps inward. A golden spiral<br>traces the way into the stars.</p><button class="explore" id="explore"><span class="mouse"><i></i></span><span>Scroll to explore</span></button></section>
+<section class="story" aria-live="polite"><div class="eyebrow"><i></i><span id="chapter">CHAPTER 01</span><b>/</b><span id="location">PERSPECTIVE LOOP</span></div><h1 id="headline">The Spiral<br><em>Staircase.</em></h1><p id="description">Look down the stairwell.<br>Now look up at the stars. Remember that curve.</p><button class="explore" id="explore"><span class="mouse"><i></i></span><span>Scroll to explore</span></button></section>
 <section class="finale" aria-hidden="true"><h2>MOVIES MANIM</h2><div class="coming">COMING SOON</div></section>
 
+<section class="beyond" aria-hidden="true" inert>
+  <div class="eyebrow"><i></i>EPILOGUE &nbsp; / &nbsp; OORT CLOUD</div>
+  <h2>Beyond <br>Space.</h2>
+  <p>Beyond the Oort Cloud, the Sun is one star among thousands. We turn back to find it. Slowly, the scattered lights take shape.</p>
+</section>
 <dialog id="chapters"><div class="dialog-head"><span>Flight sequence</span><button id="close" aria-label="Close chapter menu">×</button></div><nav id="menu-links" aria-label="Chapters"></nav><a class="credits" href="asset-credits.txt" target="_blank" rel="noopener">Asset credits</a></dialog>
-</main><script type="module" src="main.js"></script></body></html>
+</main><div id="intro-range" aria-hidden="true"></div><div id="oort-range" aria-hidden="true"></div><script type="module" src="main.js?v=cloud-release"></script></body></html>
